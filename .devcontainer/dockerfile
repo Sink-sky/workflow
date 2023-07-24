@@ -1,0 +1,31 @@
+FROM gcc:latest
+MAINTAINER sinksky
+
+ENV HOME /root
+ARG PYTHON_VERSION=3.11
+ENV PYENV_ROOT="${HOME}/.pyenv"
+# pyenv & pipx ensurepath
+ENV PATH="${PYENV_ROOT}/bin:${HOME}/.local/bin:$PATH"
+
+RUN curl https://pyenv.run | bash \
+    && pyenv install ${PYTHON_VERSION} \
+    && pyenv global ${PYTHON_VERSION}
+
+RUN apt update \
+    && apt install -y python3-pip python3-poetry pipx \
+    cmake zsh fzf vim tmux
+
+COPY linux /workflow/linux
+COPY pyboot /workflow/pyboot
+
+RUN pipx install /workflow/pyboot \
+    && bash /workflow/linux/init/init_zsh.sh \
+    && bash /workflow/linux/init/init_vim.sh
+
+WORKDIR $HOME
+COPY linux/gitconfig .gitconfig
+COPY linux/tmux.conf .tmux.conf
+
+RUN touch .fzf.zsh
+
+CMD ["/bin/zsh"]
